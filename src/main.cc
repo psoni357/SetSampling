@@ -21,6 +21,11 @@ uint64_t warmup_instructions     = 1000000,
 
 time_t start_time;
 
+//Global values for a counter to see if LIN or LRU is working better + lists of leader sets
+//float SCRTcounter = 0;
+//uint32_t *LINsets;
+//uint32_t *LRUsets;
+
 // PAGE TABLE
 uint32_t PAGE_TABLE_LATENCY = 0, SWAP_LATENCY = 0;
 queue <uint64_t > page_queue;
@@ -812,6 +817,10 @@ int main(int argc, char** argv)
         uncore.LLC.upper_level_dcache[i] = &ooo_cpu[i].L2C;
         uncore.LLC.lower_level = &uncore.DRAM;
 
+	//cout << "/////////////////////////" <<
+	//"Set number " << uncore.LLC.NUM_SET <<
+	//"/////////////////////////" << endl;
+
         // OFF-CHIP DRAM
         uncore.DRAM.fill_level = FILL_DRAM;
         uncore.DRAM.upper_level_icache[i] = &uncore.LLC;
@@ -820,6 +829,27 @@ int main(int argc, char** argv)
             uncore.DRAM.RQ[i].is_RQ = 1;
             uncore.DRAM.WQ[i].is_WQ = 1;
         }
+
+	/*//Figure out leader sets for set sampling
+	uint32_t numset = uncore.LLC.NUM_SET;
+	uint32_t step = numset/32;
+	LRUsets = new uint32_t[16];
+	LINsets = new uint32_t[16];
+	int mode = 1;//1 for LIN 0 for LRU
+	uint32_t LINindex = 0;
+	uint32_t LRUindex = 0;
+	for(uint32_t i=0;i<numset;i+=step){
+		if(mode){
+			LINsets[LINindex] = i;
+			mode = 0;
+			LINindex++;
+		}
+		else{
+			LRUsets[LRUindex] = i;
+			mode = 1;
+			LRUindex++;
+		}
+	}*/
 
         warmup_complete[i] = 0;
         //all_warmup_complete = NUM_CPUS;

@@ -3,6 +3,10 @@
 #define maxPMCL 3
 uint32_t mlpl[LLC_SET][LLC_WAY];
 
+float SCTRcounter = 0;
+uint32_t *LRUsets;
+uint32_t *LINsets;
+
 // initialize replacement state
 void CACHE::llc_initialize_replacement()
 {
@@ -13,7 +17,26 @@ void CACHE::llc_initialize_replacement()
         }
     }
 
-
+    //Figure out leader sets for set sampling
+    uint32_t numset = LLC_SET;
+    uint32_t step = numset/32;
+    LRUsets = new uint32_t[16];
+    LINsets = new uint32_t[16];
+    int mode = 1;//1 for LIN 0 for LRU
+    uint32_t LINindex = 0;
+    uint32_t LRUindex = 0;
+    for(uint32_t i=0;i<numset;i+=step){
+            if(mode){
+                    LINsets[LINindex] = i;
+                    mode = 0;
+                    LINindex++;
+            }
+            else{
+                    LRUsets[LRUindex] = i;
+                    mode = 1;
+                    LRUindex++;
+            }
+    }
 }
 
 // find replacement victim
@@ -122,6 +145,33 @@ void CACHE::llc_update_replacement_state(uint32_t cpu, uint32_t set, uint32_t wa
 	else
 	{
 		mlpl[set][way] = 7;
+	}
+
+	//if it is a miss then we change the counter
+	if(!hit){
+		int settype = 0;
+		for(int i = 0;i<16;i++){
+			if(set==LINsets[i]){
+				settype = 1;
+				break;
+			}
+			else if(set==LRUsets[i]){
+				settype = 2;
+				break;
+			}
+		}
+		//1 means lin set, 2 means lru set, 0 means follower set
+		if(settype==1){
+			//lin missed so decrement counter
+			SCTRcounter = SCTRcounter - mlpl[set][way];
+		}
+		else if(settype==2){
+			//lru missed so increment counter
+			SCTRcounter = SCTRcounter + mlpl[set][way];
+		}
+		else{
+			//do nothing
+		}
 	}
     }
     lru_update(set, way);
