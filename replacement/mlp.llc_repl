@@ -19,9 +19,9 @@ void CACHE::llc_initialize_replacement()
 
     //Figure out leader sets for set sampling
     uint32_t numset = LLC_SET;
-    uint32_t step = numset/32;
-    LRUsets = new uint32_t[16];
-    LINsets = new uint32_t[16];
+    uint32_t step = numset/64;
+    LRUsets = new uint32_t[32];
+    LINsets = new uint32_t[32];
     int mode = 1;//1 for LIN 0 for LRU
     uint32_t LINindex = 0;
     uint32_t LRUindex = 0;
@@ -44,7 +44,7 @@ uint32_t CACHE::llc_find_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, c
 {
     // if this is a leader set it must use either lru or lin    
     int reptype = 0;//0 is follow normal 1 is follow lin 2 is follow lru
-    for(int i=0;i<16;i++){
+    for(int i=0;i<32;i++){
        if(set==LINsets[i]){
          reptype = 1;
          break;
@@ -174,7 +174,7 @@ void CACHE::llc_update_replacement_state(uint32_t cpu, uint32_t set, uint32_t wa
 	//if it is a miss then we change the counter
 	if(!hit){
 		int settype = 0;
-		for(int i = 0;i<16;i++){
+		for(int i = 0;i<32;i++){
 			if(set==LINsets[i]){
 				settype = 1;
 				break;
